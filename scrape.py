@@ -1,12 +1,23 @@
 
 import itertools as it
+import re
 import sqlite3
 
 import dryscrape
+import icu
+
+
+title_match = re.compile(r'D[Rr]\.\s*')
+decap_name = icu.Transliterator.createInstance('tr-title').transliterate
+
+
+def tidy_up_row(row):
+    first, last, *etc = (i.strip() for i in row)
+    return (decap_name(title_match.sub('', first)), decap_name(last), *etc)
 
 
 def parse_table(doc):
-    return (tuple(i.text_content().strip() for i in v.xpath('./td'))
+    return (tidy_up_row(i.text_content() for i in v.xpath('./td'))
             for v in doc.xpath('//table[@id="ctl00_ContentPlaceHolder1_ASPxGridView1_DXMainTable"]'
                                '//tr[@class="dxgvDataRow"]'))
 

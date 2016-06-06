@@ -1,1 +1,2 @@
 dryscrape==1.0
+PyICU==1.9.3
