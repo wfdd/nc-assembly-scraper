@@ -7,7 +7,7 @@ import dryscrape
 import icu
 
 
-title_match = re.compile(r'D[Rr]\.\s*')
+title_match = re.compile(r'D[RrTt]\.\s*')
 decap_name = icu.Transliterator.createInstance('tr-title').transliterate
 
 def start_session(page):
