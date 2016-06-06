@@ -22,6 +22,7 @@ def tidy_up_row(row, url):
     area, first, last, party, *_ = (i.strip() for i in row)
     first, last = decap_name(title_match.sub('', first)), decap_name(last)
     return (create_id(' '.join((first, last))),
+            first + ' ' + last,
             first,
             last,
             party,
@@ -56,9 +57,9 @@ def main():
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
 CREATE TABLE IF NOT EXISTS data
-    (id, first_name, last_name, party, term, area, image, source,
-     UNIQUE (id, first_name, last_name, party, term, area, image, source))''')
-        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+(id, name, given_name, family_name, party, term, area, image, source,
+ UNIQUE (id, name, given_name, family_name, party, term, area, image, source))''')
+        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                       it.chain.from_iterable(parse_pages(session)))
 
 if __name__ == '__main__':

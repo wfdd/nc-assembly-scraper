@@ -10,6 +10,7 @@ import icu
 title_match = re.compile(r'D[RrTt]\.\s*')
 decap_name = icu.Transliterator.createInstance('tr-title').transliterate
 
+
 def start_session(page):
     session = dryscrape.Session(base_url='http://www.cm.gov.nc.tr/')
     session.set_attribute('auto_load_images', False)
@@ -19,7 +20,8 @@ def start_session(page):
 
 def tidy_up_row(row):
     first, last, *etc = (i.strip() for i in row)
-    return (decap_name(title_match.sub('', first)), decap_name(last), *etc)
+    first, last = decap_name(title_match.sub('', first)), decap_name(last)
+    return (first + ' ' + last, first, last, *etc)
 
 
 def parse_table(doc):
@@ -52,8 +54,8 @@ def main():
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
 CREATE TABLE IF NOT EXISTS elected
-    (first_name, last_name, party, election_year, area,
-     UNIQUE (first_name, last_name, party, election_year, area))''')
+(name, given_name, family_name, party, election_year, area,
+ UNIQUE (name, given_name, family_name, party, election_year, area))''')
         while True:
             c.executemany('INSERT OR REPLACE INTO elected VALUES (?, ?, ?, ?, ?)',
                           it.chain.from_iterable(parse_pages(session)))
