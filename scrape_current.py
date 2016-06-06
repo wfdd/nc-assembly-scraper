@@ -57,8 +57,8 @@ def main():
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
 CREATE TABLE IF NOT EXISTS data
-(id, name, given_name, family_name, party, term, area, image, source,
- UNIQUE (id, name, given_name, family_name, party, term, area, image, source))''')
+(id, name, given_name, family_name, 'group', term, area, image, source,
+ UNIQUE (id, name, given_name, family_name, 'group', term, area, image, source))''')
         c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                       it.chain.from_iterable(parse_pages(session)))
 
