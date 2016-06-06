@@ -10,6 +10,7 @@ def main():
             if not c.execute('SELECT * FROM data WHERE id=?', (photo.stem,))\
                     .fetchone():
                 print('No person found for ' + repr(photo), file=sys.stderr)
+                continue
             c.execute('UPDATE data SET image=? where id=?',
                       ('https://cdn.rawgit.com/wfdd/nc-assembly-scraper'
                        '/master/photos/' + photo.name, photo.stem))
