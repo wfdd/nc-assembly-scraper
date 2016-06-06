@@ -10,6 +10,12 @@ import icu
 title_match = re.compile(r'D[Rr]\.\s*')
 decap_name = icu.Transliterator.createInstance('tr-title').transliterate
 
+def start_session(page):
+    session = dryscrape.Session(base_url='http://www.cm.gov.nc.tr/')
+    session.set_attribute('auto_load_images', False)
+    session.visit(page)
+    return session
+
 
 def tidy_up_row(row):
     first, last, *etc = (i.strip() for i in row)
@@ -41,17 +47,15 @@ def parse_pages(session):
 
 
 def main():
-    session = dryscrape.Session(base_url='http://www.cm.gov.nc.tr/')
-    session.set_attribute('auto_load_images', False)
-    session.visit('Secimler.aspx')
+    session = start_session('Secimler.aspx')
 
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
-CREATE TABLE IF NOT EXISTS data
+CREATE TABLE IF NOT EXISTS elected
     (first_name, last_name, party, election_year, area,
      UNIQUE (first_name, last_name, party, election_year, area))''')
         while True:
-            c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?)',
+            c.executemany('INSERT OR REPLACE INTO elected VALUES (?, ?, ?, ?, ?)',
                           it.chain.from_iterable(parse_pages(session)))
             year = session.at_xpath('//select[@name="ctl00$ContentPlaceHolder1$DropDownList1"]'
                                     '/option[@selected="selected"]/following-sibling::option')
