@@ -2,13 +2,21 @@
 import itertools as it
 import sqlite3
 
+import icu
+
 from scrape_elected import decap_name, start_session, title_match
+
+
+def create_id(s):
+    return icu.Transliterator.createInstance('tr-ASCII; lower')\
+        .transliterate(s).replace(' ', '-')
 
 
 def tidy_up_row(row):
     area, first, last, party, *_ = (i.strip() for i in row)
-    return (decap_name(title_match.sub('', first)), decap_name(last),
-            party, '2013', area)
+    first, last = decap_name(title_match.sub('', first)), decap_name(last)
+    return (create_id(' '.join((first, last))), first, last,
+            party, '2013', area, None)
 
 
 def parse_table(doc):
@@ -36,9 +44,9 @@ def main():
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
 CREATE TABLE IF NOT EXISTS data
-    (first_name, last_name, party, term, area,
-     UNIQUE (first_name, last_name, party, term, area))''')
-        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?)',
+    (id, first_name, last_name, party, term, area, image,
+     UNIQUE (id, first_name, last_name, party, term, area, image))''')
+        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?)',
                       it.chain.from_iterable(parse_pages(session)))
 
 if __name__ == '__main__':
