@@ -5,14 +5,14 @@ import sqlite3
 from scrape_current import decap_name, start_session, title_match
 
 
-def tidy_up_row(row):
+def prepare_row(row):
     first, last, *etc = (i.strip() for i in row)
     first, last = decap_name(title_match.sub('', first)), decap_name(last)
     return (first + ' ' + last, first, last, *etc)
 
 
 def parse_table(doc):
-    return (tidy_up_row(i.text_content() for i in v.xpath('./td'))
+    return (prepare_row(i.text_content() for i in v.xpath('./td'))
             for v in doc.xpath('//table[@id="ctl00_ContentPlaceHolder1_ASPxGridView1_DXMainTable"]'
                                '//tr[@class="dxgvDataRow"]'))
 
