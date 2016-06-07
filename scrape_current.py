@@ -1,14 +1,20 @@
 
+import datetime as dt
 import itertools as it
 import re
 import sqlite3
 import subprocess
 import urllib.request
+import sys
 
 import dryscrape
 import icu
 
-birth_date_match = re.compile(r'^\s*(\d{4})\syılında[^\.]+doğdu\.', re.MULTILINE)
+birth_date_match = re.compile(r'^\s*(?:'
+                              r'(?P<d>\d{1,2}\s+\w+\s+\d{4})|'
+                              r'(?P<y>\d{4})\s+(?:senesinde|yılında)'
+                              r')[^\.]+doğdu',
+                              re.MULTILINE)
 nonword_match = re.compile(r'[^\w\s-]')
 title_match = re.compile(r'(?:D[RrTt]|Prof)\.\s*')
 whitespace_match = re.compile(r'[\s-]+')
@@ -16,6 +22,8 @@ whitespace_match = re.compile(r'[\s-]+')
 decap_name = icu.Transliterator.createInstance('tr-title').transliterate
 tr2lcascii = icu.Transliterator.createInstance('tr-ASCII; lower').transliterate
 
+parse_date = icu.DateFormat.createDateInstance(icu.DateFormat.LONG,
+                                               icu.Locale('tr')).parse
 
 def create_id(s):
     return whitespace_match.sub('-', nonword_match.sub('', tr2lcascii(s)))
@@ -28,9 +36,20 @@ def parse_bio_doc(url):
                           input=doc, stdout=subprocess.PIPE).stdout.decode()
 
     birth_date = birth_date_match.search(text)
+    if birth_date:
+        birth_date = birth_date.groupdict()
+        if birth_date['y']:
+            birth_date = birth_date['y']
+        else:
+            try:
+                birth_date = dt.date.fromtimestamp(parse_date(birth_date['d']))\
+                    .isoformat()
+            except icu.ICUError:
+                print('Unable to parse ' + repr(birth_date), file=sys.stderr)
+                birth_date = None
     name = text.replace('[pic]', '').strip().partition('\n')[0]
     name = decap_name(title_match.sub('', ' '.join(name.split())))
-    return birth_date and birth_date.group(1), name
+    return birth_date, name
 
 
 def parse_table(doc, url):
