@@ -42,9 +42,10 @@ def main():
         c.execute('''\
 CREATE TABLE IF NOT EXISTS elected
 (name, given_name, family_name, 'group', election_year, area,
- UNIQUE (name, given_name, family_name, 'group', election_year, area))''')
+ UNIQUE (name, 'group', election_year, area))''')
         while True:
-            c.executemany('INSERT OR REPLACE INTO elected VALUES (?, ?, ?, ?, ?)',
+            c.executemany('''\
+INSERT OR REPLACE INTO elected VALUES (?, ?, ?, ?, ?)''',
                           it.chain.from_iterable(parse_pages(session)))
             year = session.at_xpath('//select[@name="ctl00$ContentPlaceHolder1$DropDownList1"]'
                                     '/option[@selected="selected"]/following-sibling::option')

@@ -32,6 +32,7 @@ tr2lcascii = icu.Transliterator.createInstance('tr-ASCII; lower').transliterate
 parse_date = icu.DateFormat.createDateInstance(icu.DateFormat.LONG,
                                                icu.Locale('tr')).parse
 
+
 def create_id(s):
     return whitespace_match.sub('-', nonword_match.sub('', tr2lcascii(s)))
 
@@ -119,9 +120,7 @@ def main():
         c.execute('''\
 CREATE TABLE IF NOT EXISTS data
 (id, name, given_name, family_name, sort_name, birth_date, gender,
- 'group', term, area, image, source,
- UNIQUE (id, name, given_name, family_name, sort_name, birth_date, gender,
-         'group', term, area, image, source))''')
+ 'group', term, area, image, source, UNIQUE (id, 'group', term, area))''')
         c.executemany('''\
 INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                       it.chain.from_iterable(parse_pages(session)))
