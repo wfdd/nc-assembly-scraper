@@ -1,4 +1,5 @@
 
+import csv
 import datetime as dt
 import itertools as it
 import re
@@ -9,6 +10,12 @@ import sys
 
 import dryscrape
 import icu
+
+with open('gender.csv') as file:
+    ids_to_gender = {i['id']: i['gender'] for i in csv.DictReader(file)}
+
+with open('photos.csv') as file:
+    ids_to_photo = {i['id']: i['photo'] for i in csv.DictReader(file)}
 
 birth_date_match = re.compile(r'^\s*(?:'
                               r'(?P<d>\d{1,2}\s+\w+\s+\d{4})|'
@@ -76,13 +83,15 @@ def parse_pages(session):
 def prepare_row(row, url):
     area, _, _, party, _ = (i.text_content().strip() for i in row)
     birth_date, name = parse_bio_doc(row[-1].xpath('.//a/@href')[0])
-    return (create_id(name),
+    id_ = create_id(name)
+    return (id_,
             name,
             birth_date,
+            ids_to_gender[id_],
             party,
             '8',
             area,
-            None,
+            ids_to_photo.get(id_, None),
             url)
 
 
@@ -98,9 +107,9 @@ def main():
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
 CREATE TABLE IF NOT EXISTS data
-(id, name, birth_date, 'group', term, area, image, source,
- UNIQUE (id, name, birth_date, 'group', term, area, image, source))''')
-        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+(id, name, birth_date, gender, 'group', term, area, image, source,
+ UNIQUE (id, name, birth_date, gender, 'group', term, area, image, source))''')
+        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                       it.chain.from_iterable(parse_pages(session)))
 
 if __name__ == '__main__':
