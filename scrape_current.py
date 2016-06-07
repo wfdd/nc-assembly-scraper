@@ -36,6 +36,13 @@ def create_id(s):
     return whitespace_match.sub('-', nonword_match.sub('', tr2lcascii(s)))
 
 
+def generate_names(family, full):
+    name_parts = full.split()
+    family_length = len(family.split())
+    return (' '.join(name_parts[:-family_length]),
+            ' '.join(name_parts[-family_length:]))
+
+
 def parse_bio_doc(url):
     with urllib.request.urlopen(url) as file:
         doc = file.read()
@@ -81,11 +88,15 @@ def parse_pages(session):
 
 
 def prepare_row(row, url):
-    area, _, _, party, _ = (i.text_content().strip() for i in row)
+    area, _, family, party, _ = (i.text_content().strip() for i in row)
     birth_date, name = parse_bio_doc(row[-1].xpath('.//a/@href')[0])
+    given, family = generate_names(family, name)
     id_ = create_id(name)
     return (id_,
             name,
+            given,
+            family,
+            family + ', ' + given,
             birth_date,
             ids_to_gender[id_],
             party,
@@ -107,9 +118,12 @@ def main():
     with sqlite3.connect('data.sqlite') as c:
         c.execute('''\
 CREATE TABLE IF NOT EXISTS data
-(id, name, birth_date, gender, 'group', term, area, image, source,
- UNIQUE (id, name, birth_date, gender, 'group', term, area, image, source))''')
-        c.executemany('INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+(id, name, given_name, family_name, sort_name, birth_date, gender,
+ 'group', term, area, image, source,
+ UNIQUE (id, name, given_name, family_name, sort_name, birth_date, gender,
+         'group', term, area, image, source))''')
+        c.executemany('''\
+INSERT OR REPLACE INTO data VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                       it.chain.from_iterable(parse_pages(session)))
 
 if __name__ == '__main__':
