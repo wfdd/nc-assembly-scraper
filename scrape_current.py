@@ -89,7 +89,7 @@ def parse_pages(session):
 
 
 def prepare_row(row, url):
-    area, _, family, party, _ = (i.text_content().strip() for i in row)
+    area, _, family, group, _ = (i.text_content().strip() for i in row)
     birth_date, name = parse_bio_doc(row[-1].xpath('.//a/@href')[0])
     given, family = generate_names(family, name)
     id_ = create_id(name)
@@ -100,7 +100,7 @@ def prepare_row(row, url):
             family + ', ' + given,
             birth_date,
             ids_to_gender[id_],
-            party,
+            group,
             '8',
             area,
             ids_to_photo.get(id_, None),
