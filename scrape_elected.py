@@ -1,21 +1,8 @@
 
 import itertools as it
-import re
 import sqlite3
 
-import dryscrape
-import icu
-
-
-title_match = re.compile(r'D[RrTt]\.\s*')
-decap_name = icu.Transliterator.createInstance('tr-title').transliterate
-
-
-def start_session(page):
-    session = dryscrape.Session(base_url='http://www.cm.gov.nc.tr/')
-    session.set_attribute('auto_load_images', False)
-    session.visit(page)
-    return session
+from scrape_current import decap_name, start_session, title_match
 
 
 def tidy_up_row(row):
